@@ -1,0 +1,18 @@
+scrape_configs:
+- job_name: cadvisor
+  scrape_interval: 5s
+  static_configs:
+  - targets:
+    - cadvisor:8080
+- job_name: app
+  scrape_interval: 5s
+  metrics_path: /prometheus
+  static_configs:
+  - targets:
+    - app:8080
+- job_name: app-with-gomaxprocs
+  scrape_interval: 5s
+  metrics_path: /prometheus
+  static_configs:
+  - targets:
+    - app-with-gomaxprocs:8080
