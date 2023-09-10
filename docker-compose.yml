@@ -1,0 +1,38 @@
+services:
+  app:
+    build: .
+    image: test-gomaxprocs
+    pull_policy: never
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: "500m"
+        reservations:
+          cpus: '1'
+          memory: "500m"
+    networks:
+      - test_topo
+  app-with-gomaxprocs:
+    image: test-gomaxprocs
+    pull_policy: never
+    ports:
+      - "8082:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: "500m"
+        reservations:
+          cpus: '1'
+          memory: "500m"
+    environment:
+      - GOMAXPROCS=1
+    networks:
+      - test_topo
+networks:
+  test_topo:
+    external: true
+    name: test_topo

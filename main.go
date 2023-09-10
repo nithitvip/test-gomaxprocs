@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,9 +15,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const hmacSampleSecret = "test"
-
 func main() {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 4096)
+
 	appLog := log.Default()
 	appLog.Println(fmt.Sprintf("GOMAXPROCS: %d", runtime.GOMAXPROCS(-1)))
 
@@ -30,9 +32,9 @@ func main() {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			Issuer:    "test",
 		}
-		token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+		token := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
 
-		tokenString, err := token.SignedString([]byte(hmacSampleSecret))
+		tokenString, err := token.SignedString(privateKey)
 		if err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -46,12 +48,13 @@ func main() {
 		h := ctx.GetHeader("Authorization")
 		tokenString := strings.TrimPrefix(h, "Bearer ")
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte(hmacSampleSecret), nil
+			return privateKey.Public(), nil
 		})
 		if err != nil {
+			log.Println(err)
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
@@ -67,5 +70,5 @@ func main() {
 		}
 	})
 
-	router.Run("localhost:8080")
+	router.Run()
 }

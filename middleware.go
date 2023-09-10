@@ -22,7 +22,8 @@ func NewMetricsMiddleware() gin.HandlerFunc {
 
 		status := ctx.Writer.Status()
 		statusCode := strconv.Itoa(status)
-		requestDuration.WithLabelValues(statusCode, request.Method, request.RequestURI).Observe(time.Now().Sub(start).Seconds())
+		elapsed := float64(time.Since(start).Nanoseconds()) / 1e9
+		requestDuration.WithLabelValues(statusCode, request.Method, request.RequestURI).Observe(elapsed)
 	}
 
 }
